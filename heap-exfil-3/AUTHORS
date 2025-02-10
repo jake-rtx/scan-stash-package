@@ -1,0 +1,3 @@
+The version of heap-exfil-3 was gotten from BBN for the purposes of the CPM
+program on October 28th, 2024. The initial commit into the PACMAN git repo had
+some file permissions fixed and this file added to indicate provenance.

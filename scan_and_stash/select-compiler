@@ -1,0 +1,25 @@
+#! /bin/sh
+
+# The purpose of this script is to either select clang-morello, clang, or gcc
+# (in that order) depending on what is available. All three seem to never exist
+# at the same time, so we just search in the right order. THis should prolly
+# be fixed up better later.
+
+# This compiles purecap mode by default on cheribsd.
+/usr/bin/which clang-morello > /dev/null 2>&1
+ret=$?
+if [ "$ret" = "0" ]; then
+  exec clang-morello "${@}"
+fi
+
+/usr/bin/which clang > /dev/null 2>&1
+ret=$?
+if [ "$ret" = "0" ]; then
+  exec clang "${@}"
+fi
+
+/usr/bin/which gcc > /dev/null 2>&1
+ret=$?
+if [ "$ret" = "0" ]; then
+  exec gcc "${@}"
+fi

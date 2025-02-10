@@ -1,0 +1,50 @@
+#!/usr/bin/env bash
+
+thisdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd -P "$( dirname "$SOURCE" )" && pwd)"
+
+# Set PATHs and PERMs
+SHELL_DIR="/usr/local/bin"
+LOG_FILE="/var/log/spoofd_ssh.log"
+LOG_FILE_PERMS=644
+TARGET_USER=${1:-"root"}
+
+# Check and add shadow
+apk add shadow
+
+# Compile spoofd_ssh
+pushd $thisdir > /dev/null
+make clean
+make spoofd_ssh
+popd > /dev/null
+
+# Move to $SHELL_DIR and add shell to /etc/shells file if not already there
+cp $thisdir/spoofd_ssh $SHELL_DIR/
+if ! grep -q "spoofd_ssh" /etc/shells; then
+  echo "$SHELL_DIR/spoofd_ssh" >> /etc/shells
+else
+  echo "spoofd_ssh in /etc/shells"
+fi
+
+# Copy current sshd config for use later
+cp /etc/ssh/sshd_config $thisdir
+# Add shell to sshd_config for non-interactive sessions if not already there
+if ! grep -q "spoofd_ssh" /etc/ssh/sshd_config; then
+  echo "Match User $TARGET_USER" >> /etc/ssh/sshd_config
+  echo -e "\tForceCommand $SHELL_DIR/spoofd_ssh" >> /etc/ssh/sshd_config
+else
+  echo "spoofd_ssh in /etc/ssh/sshd_config"
+fi
+# Restart sshd
+rc-service sshd restart
+
+# Create the $LOG_FILE and give it correct perms
+touch $LOG_FILE
+chmod $LOG_FILE_PERMS $LOG_FILE
+
+# Set permissions and change root user to use shell
+chmod +x $SHELL_DIR/spoofd_ssh
+# chsh -s $SHELL_DIR/spoofd_ssh $TARGET_USER # PRT does this
+
+# Start the heap-exfil-3 server
+# $thisdir/../heap-exfil-3/start-server # PRT does this
+echo "SPOOFD READY!"

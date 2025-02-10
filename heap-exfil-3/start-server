@@ -1,0 +1,20 @@
+#! /bin/bash
+
+# The TFILE must be exactly this number of characters.
+thisdir="$( cd "$( dirname "${BASH_SOURCE[0]}" )" && cd -P "$( dirname "$SOURCE" )" && pwd)"
+
+TFILE="/tmp/serv-file"
+
+touch "$TFILE"
+chown root:root "$TFILE"
+chmod 400 "$TFILE"
+
+# we must use a real uid here for the "non root" access. We pick nobody.
+$thisdir/server -a "/dev/struct-access/private" -b "/dev/struct-access/public" -p 10088 -e 65534 -dohs &
+
+# $thisdir/server -a "/dev/struct-access-split/private" -b "/dev/struct-access-split/public" -p 10090 -e 65534 -dohs &
+
+# FIXME - add error codes for server not starting successfully.
+echo "Server pid: $!"
+sleep 2
+echo "Server started!"
